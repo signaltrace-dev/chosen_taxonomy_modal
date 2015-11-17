@@ -13,6 +13,7 @@ function chosen_taxonomy_modal_menu(){
   $items['admin/vocabulary/%/create-term/%ctools_js/%'] = array(
     'page callback' => 'chosen_taxonomy_modal_create_term_callback',
     'page arguments' => array(4, 5, 2),
+    'theme callback' => 'ajax_base_page_theme',
     'access arguments' => array('administer taxonomy'),
     'type' => MENU_CALLBACK,
   );
@@ -77,7 +78,7 @@ function chosen_taxonomy_modal_form_alter(&$form, &$form_state, $form_id){
   if($form_id == 'taxonomy_form_term'){
     if(!empty($form_state['ajax'])){
       // TODO: Add configuration option for Name Description text
-      $name_description = t('The friendly name for this item. This will be what shows up in dropdowns or other selection elements.<br/>Example: "Excel Spreadsheet"');
+      $name_description = t('The friendly name for this item. This will be what shows up in dropdowns or other selection elements.');
 
       $form['name']['#default_value'] = '';
       $form['name']['#description'] = $name_description;
@@ -164,10 +165,10 @@ function chosen_taxonomy_modal_form_alter(&$form, &$form_state, $form_id){
   }
 }
 
+// Modal for taxonomy term creation.
 function chosen_taxonomy_modal_create_term_callback($ajax, $target_field = NULL, $vid = NULL){
   $vocab = taxonomy_vocabulary_load($vid);
   form_load_include($form_state, 'inc', 'taxonomy', 'taxonomy.admin');
-
 
   if($ajax){
     ctools_include('ajax');
@@ -194,9 +195,12 @@ function chosen_taxonomy_modal_create_term_callback($ajax, $target_field = NULL,
     if(!empty($form_state['ajax_commands'])){
       $output = $form_state['ajax_commands'];
     }
+
     if($form_state['executed']){
       $tid = !empty($form_state['tid']) ? $form_state['tid'] : '';
       $term = taxonomy_term_load($tid);
+
+      // Add newly created values to hidden fields used to select new term on modal close
       $output = array(
         ctools_modal_command_dismiss(),
         ajax_command_invoke('#pnl-hdn-term-added input[type=hidden]', 'val', array($tid)),
@@ -211,7 +215,6 @@ function chosen_taxonomy_modal_create_term_callback($ajax, $target_field = NULL,
   }
 
   else{
-
       $form_state = array(
         'title' => t('Add ' . $vocab->name),
         'build_info' => array(
